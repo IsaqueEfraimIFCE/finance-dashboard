@@ -1,0 +1,81 @@
+// Prisma schema for the personal finance dashboard.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  plaidItems Item[]
+}
+
+model Item {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pluggyItemId String   @unique
+  institutionName String?
+  status       String   @default("active") // active | error | reauth_required
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  accounts Account[]
+}
+
+model Account {
+  id             String  @id @default(cuid())
+  itemId         String
+  item           Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  pluggyAccountId String  @unique
+  name           String
+  officialName   String?
+  mask           String?
+  type           String
+  subtype        String?
+  currentBalance Float?
+  availableBalance Float?
+  isoCurrencyCode String? @default("BRL")
+
+  transactions Transaction[]
+}
+
+model Transaction {
+  id                   String   @id @default(cuid())
+  accountId            String
+  account              Account  @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  pluggyTransactionId  String   @unique
+  amount               Float // internal convention: positive = money out, negative = money in
+  isoCurrencyCode      String?  @default("BRL")
+  date                 DateTime
+  name                 String
+  merchantName         String?
+  category             String?
+  pending              Boolean  @default(false)
+  createdAt            DateTime @default(now())
+
+  @@index([accountId, date])
+  @@index([merchantName])
+}
+
+model RecurringBill {
+  id            String   @id @default(cuid())
+  merchantName  String
+  averageAmount Float
+  cadence       String // weekly | biweekly | monthly | yearly
+  lastDate      DateTime
+  nextDueDate   DateTime
+  category      String?
+  active        Boolean  @default(true)
+  updatedAt     DateTime @updatedAt
+
+  @@unique([merchantName, cadence])
+}

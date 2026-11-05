@@ -1,0 +1,18 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "file:/app/data/prod.db"
+      AUTH_SECRET: ${AUTH_SECRET}
+      SEED_EMAIL: ${SEED_EMAIL}
+      SEED_PASSWORD: ${SEED_PASSWORD}
+      PLUGGY_CLIENT_ID: ${PLUGGY_CLIENT_ID}
+      PLUGGY_CLIENT_SECRET: ${PLUGGY_CLIENT_SECRET}
+    volumes:
+      - finance-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  finance-data:
